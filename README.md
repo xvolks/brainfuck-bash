@@ -38,6 +38,30 @@ Run:
 ./bf /path/to/script.bf
 ```
 
+## Tests
+
+`./run-tests.sh` runs every program of `samples/` and compares the output byte for byte:
+
+```bash
+./run-tests.sh              # all tests
+./run-tests.sh hello        # only tests whose name contains "hello"
+VERBOSE=1 ./run-tests.sh    # full output on failure
+```
+
+| sample | what it checks | expected output |
+| --- | --- | --- |
+| `hello` | canonical Hello World, nested loops | `Hello World!` |
+| `hello_world_full` | one multiply loop per letter | `Hello World!` |
+| `counter` | increment loop | `123456789` |
+| `countdown` | decrement loop, two cells | `987654321` |
+| `abc` | short programs, 3 cells | `abc` |
+| `multi_cell` | one cell pair per character | `multi` |
+| `garbage` | non-command characters are ignored | `d` |
+| `line` | several cells, no trailing newline | two `\n` |
+| `wrap_around` | cell underflow wraps to 255 | `#` |
+| `empty` | empty program | nothing |
+| `test` | print a string | JIPPS/YSVPH0 |
+
 ## Requirements
 
 - Bash version 5 or higher (the script checks and exits with an error on older versions)
