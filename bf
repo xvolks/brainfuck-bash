@@ -251,6 +251,8 @@ execute-brainfuck() {
 
 # Chain loading, parsing and executing brainfuck script
 run-brainfuck-script() {
+  ops=()
+  stack=()
   local filename=$1
   echo_d "Running $filename"
   local source=$(cat $filename)
