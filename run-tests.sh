@@ -27,6 +27,8 @@ declare -A expected=(
   [line]=$'\n\n'
   [empty]=""
   [test]="JIPPS/YSVPH0"
+  [jumps]=$'\x01'
+  [quine]=$(cat $SAMPLES_DIR/quine.bf)
 )
 
 if [[ -t 1 ]]; then
