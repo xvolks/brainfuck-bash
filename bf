@@ -6,7 +6,7 @@ HERE=$(dirname $0)
 # Define globals
 declare -a ops=()
 declare -a stack=()
-declare -a jumps=()
+
 #
 # Define functions
 #
@@ -59,12 +59,12 @@ add-to-ops() {
 
 # Replace the jump target with the given value
 replace-ops-with() {
-  jump_target="$1"
+  local jump_target="$1"
 
   echo_d "replace-ops-with: $jump_target"
   local needle=";"
-  sta=${jump_target%%"$needle"*}
-  end=${jump_target#*"$needle"}
+  local sta=${jump_target%%"$needle"*}
+  local end=${jump_target#*"$needle"}
 
   local op="${ops[sta]}"
   ope=${op%%"$needle"*}
@@ -95,30 +95,33 @@ add-to-stack() {
 }
 
 
-# Memorize the current current index as the destination of the previous jz instruction for backpatching later
+# Memorize the current index as the destination of the previous jz instruction for backpatching later
 # Retreive the jz index to patch the jnz destination index.
 replace-last-destination-jump-index() {
+  # looks like 10;0
   local last_element="${stack[-1]}"
+  # pop the stack
+  unset 'stack[-1]'
+
   local needle=";"
-  sta=${last_element%%"$needle"*}
-  end=${last_element#*"$needle"}
+  local sta=${last_element%%"$needle"*}
+  local end=${last_element#*"$needle"}
+
+  # We found the JZ at opcode #sta: add the JNZ pointing the JZ.
+  add-to-ops 'jnz' "$sta"
+
+  # Now compute the JZ destination (end)
   echo_d "replace-last-destination-jump-index(): sta: $sta, end: $end"
   if [[ $end != "0" ]]; then
     fatal "replace-last-destination-jump-index(): end should be 0 here!"
   fi
   let actual_index="${#ops[@]}"
   end="$actual_index"
-  local data="$sta;$end"
 
-  echo_d "replace-last-destination-jump-index(): $last_element --> $data"
-  jumps+=("$data")
-  unset 'stack[-1]'
-
-  # Now the jnz is still pointing to 1, it must be pointing to the corresponding jz (sta)
-  # remove the jnz we've just added, not great, but will do for now.
-  unset 'ops[-1]'
-  # Add back the jnz with
-  add-to-ops 'jnz' "$sta"
+  # backpatch the jz instruction
+  echo_d "JZ to patch: ${ops[sta]} <------------"
+  ops[sta]="jz;$end"
+  echo_d "JZ patched : ${ops[sta]} <------------"
 }
 
 
@@ -159,7 +162,6 @@ parse-instructions() {
           ;;
         ']')
           c=$char
-          add-op-to-ops "jnz"
           replace-last-destination-jump-index
          ;;
         .)
@@ -177,14 +179,6 @@ parse-instructions() {
       [[ $c == 0 ]] || echo_d -n $c
     done
   done
-  echo_d
-  echo_d "Backpatching jumps..."
-  while [[ ${#jumps[@]} -gt 0 ]]; do
-    local last_jump="${jumps[-1]}"
-    replace-ops-with "$last_jump"
-    unset 'jumps[-1]'
-  done
-  echo_d "Done.. Backpatching jumps."
 
   if [[ $DEBUG != "" ]]; then
     local i=0;
