@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# Ensure we have the right directory
-HERE=$(dirname $0)
-
 # Define globals
 declare -a ops=()
 declare -a stack=()
@@ -28,7 +25,7 @@ usage() {
 
 # Fatal function: print the error and exit
 fatal() {
-    echo "ERROR: " $@
+    echo "ERROR: " "$@"
     exit 1
 }
 
@@ -36,7 +33,7 @@ fatal() {
 # Debug function
 echo_d() {
   if [[ $DEBUG != "" ]]; then
-    echo $@
+    echo "$@"
   fi
 }
 
@@ -68,7 +65,7 @@ replace-ops-with() {
 
   local op="${ops[sta]}"
   ope=${op%%"$needle"*}
-  ops[$sta]="$ope;$end"
+  ops[sta]="$ope;$end"
   echo_d "op: $op, new op: $ope;$end"
 }
 
@@ -115,7 +112,7 @@ replace-last-destination-jump-index() {
   if [[ $end != "0" ]]; then
     fatal "replace-last-destination-jump-index(): end should be 0 here!"
   fi
-  let actual_index="${#ops[@]}"
+  (( actual_index="${#ops[@]}" ))
   end="$actual_index"
 
   # backpatch the jz instruction
@@ -130,11 +127,9 @@ parse-instructions() {
   local source=("$@")
   local word=''
   local i=0, c=0
-  for word in ${source[@]}; do
+  for word in "${source[@]}"; do
     for (( j=0; j<${#word}; j++ )); do
       char="${word:$j:1}"
-      # local op
-      declare -A op
       case $char in
         +)
           c=$char
@@ -176,7 +171,7 @@ parse-instructions() {
           c=0
           ;;
       esac
-      [[ $c == 0 ]] || echo_d -n $c
+      [[ $c == 0 ]] || echo_d -n "$c"
     done
   done
 
@@ -235,12 +230,13 @@ execute-brainfuck() {
         fi
         ;;
       out)
-        printf "\\x$(printf '%02x' "${memory[$head]}")"
+        printf '%b' "\\x$(printf '%02x' "${memory[head]}")"
         ;;
       'in')
         local char
         read -rn 1 char
-        local d=$(printf '%d' "'$char")
+        local d
+        d=$(printf '%d' "'$char")
         (( memory[head] = d ))
         ;;
     esac
@@ -255,10 +251,11 @@ run-brainfuck-script() {
   stack=()
   local filename=$1
   echo_d "Running $filename"
-  local source=$(cat $filename)
-  echo_d ${source[@]}
+  local source
+  source="$(cat "$filename")"
+  echo_d "${source[@]}"
   # source will be an array of lines
-  parse-instructions ${source[@]}
+  parse-instructions "${source[@]}"
   execute-brainfuck
   return 0
 }
@@ -269,7 +266,7 @@ run-brainfuck-script() {
 # Check we are running bash version 5 (macOS is still running version 3 in 2026...)
 header=$(/usr/bin/env bash --version |head -n 1| sed -E -e's/GNU bash, version (.*) \(.*/\1/g')
 major="${header%%.*}"
-if [[ $major < 5 ]]; then
+if [[ $major -lt 5 ]]; then
   echo_d "This script needs bash version 5"
   exit 1
 fi
@@ -289,7 +286,7 @@ for ((i=0; i<argc; ++i)); do
       shift
       ;;
     *)
-      filenames+=($option)
+      filenames+=("$option")
       option=$1
       shift
       ;;
@@ -298,11 +295,11 @@ done
 
 
 has_file=0
-for filename in ${filenames[@]}; do
-  echo_d $filename
+for filename in "${filenames[@]}"; do
+  echo_d "$filename"
   if [[ -f $filename ]]; then
     has_file=1
-    run-brainfuck-script $filename
+    run-brainfuck-script "$filename"
   else
     fatal "File not found error: $filename"
   fi
