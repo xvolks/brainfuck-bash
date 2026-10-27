@@ -18,6 +18,20 @@ declare -a jumps=()
 #
 # special cases for jz and jnz where stack and jumps arrays are used to backpatch the brainfuck code
 
+# Basic usage function
+usage() {
+    echo "Usage: $0 <brainfuck source file.bf>"
+    echo "  Runs the supplied brainfuck program."
+    exit 2
+}
+
+
+# Fatal function: print the error and exit
+fatal() {
+    echo "ERROR: " $@
+    exit 1
+}
+
 
 # Debug function
 echo_d() {
@@ -25,6 +39,7 @@ echo_d() {
     echo $@
   fi
 }
+
 
 # Add an operation to the list of operations
 add-to-ops() {
@@ -40,6 +55,7 @@ add-to-ops() {
   # echo_d "add-to-ops: new len is ${#ops[@]}"
   # echo_d "  we've just add to ops: ${ops[-1]} from $data"
 }
+
 
 # Replace the jump target with the given value
 replace-ops-with() {
@@ -86,10 +102,9 @@ replace-last-destination-jump-index() {
   local needle=";"
   sta=${last_element%%"$needle"*}
   end=${last_element#*"$needle"}
-  echo_d "sta: $sta, end: $end"
+  echo_d "replace-last-destination-jump-index(): sta: $sta, end: $end"
   if [[ $end != "0" ]]; then
-    echo_d "ERROR: end should be 0 here!"
-    exit 1
+    fatal "replace-last-destination-jump-index(): end should be 0 here!"
   fi
   let actual_index="${#ops[@]}"
   end="$actual_index"
@@ -182,7 +197,7 @@ parse-instructions() {
     done
   fi
 }
- 
+
 
 # Main function for brainfuck execution
 execute-brainfuck() {
@@ -269,6 +284,7 @@ argc=$#
 option=$1
 shift
 
+
 for ((i=0; i<argc; ++i)); do
   case $option in
     --no-jit) 
@@ -284,12 +300,19 @@ for ((i=0; i<argc; ++i)); do
   esac
 done
 
+
+has_file=0
 for filename in ${filenames[@]}; do
   echo_d $filename
-  if [[ -f $filename ]]; then 
+  if [[ -f $filename ]]; then
+    has_file=1
     run-brainfuck-script $filename
   else
-    echo_d "File not found error: $filename"
+    fatal "File not found error: $filename"
   fi
 done
 
+
+if (( has_file == 0 )); then
+  usage
+fi
