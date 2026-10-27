@@ -13,7 +13,7 @@ declare -a jumps=()
 # ops is an array with formated values "op-name;operand"
 # op-name is the operation like inc
 # operand is the number of repetition of this operation
-# so "inc;8" is ++++++++ 
+# so "inc;8" is ++++++++
 # by default the count is 1.
 #
 # special cases for jz and jnz where stack and jumps arrays are used to backpatch the brainfuck code
@@ -86,12 +86,12 @@ add-op-to-ops() {
 add-to-stack() {
   local a="$1"
   local b="$2"
-  echo_d "add-to-stack($a, $b)" 
+  echo_d "add-to-stack($a, $b)"
   local data="$a;$b"
   stack+=("$data")
   echo_d "add-to-stack: new len is ${#stack[@]}"
   local last_element="${stack[-1]}"
-  echo_d "  we've just added $last_element -> $data" 
+  echo_d "  we've just added $last_element -> $data"
 }
 
 
@@ -287,7 +287,7 @@ shift
 
 for ((i=0; i<argc; ++i)); do
   case $option in
-    --no-jit) 
+    --no-jit)
       echo_d "JIT is not supported, anyways :P"
       option=$1
       shift
